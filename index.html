@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Express - Restaurant Management & Ordering System</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-utensils"></i>
+            <span>Gourmet<strong>Express</strong></span>
+        </div>
+        <nav class="nav-links">
+            <button class="nav-btn active" onclick="switchTab('menuTab')"><i class="fa-solid fa-burger"></i> Customer Menu</button>
+            <button class="nav-btn" onclick="switchTab('kitchenTab')">
+                <i class="fa-solid fa-fire-burner"></i> Kitchen Display 
+                <span id="kitchenBadge" class="badge">0</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('adminTab')"><i class="fa-solid fa-chart-line"></i> Admin Panel</button>
+        </nav>
+        <div class="cart-trigger" onclick="toggleCartModal(true)">
+            <i class="fa-solid fa-basket-shopping"></i>
+            <span id="cartCountBadge" class="cart-count">0</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="container">
+
+        <!-- ================= 1. CUSTOMER MENU TAB ================= -->
+        <section id="menuTab" class="tab-content active">
+            <div class="hero-banner">
+                <div class="hero-text">
+                    <h1>Delicious Food, Fast Delivery</h1>
+                    <p>Order online for Dine-In, Pickup, or Home Delivery</p>
+                </div>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search delicious food..." onkeyup="filterMenu()">
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="categories" id="categoryContainer">
+                <button class="cat-btn active" onclick="filterCategory('All')">All</button>
+                <button class="cat-btn" onclick="filterCategory('Burgers')">Burgers</button>
+                <button class="cat-btn" onclick="filterCategory('Pizza')">Pizza</button>
+                <button class="cat-btn" onclick="filterCategory('Fries')">Fries</button>
+                <button class="cat-btn" onclick="filterCategory('Drinks')">Drinks</button>
+            </div>
+
+            <!-- Menu Grid -->
+            <div class="menu-grid" id="menuGrid"></div>
+        </section>
+
+        <!-- ================= 2. KITCHEN DISPLAY TAB ================= -->
+        <section id="kitchenTab" class="tab-content">
+            <div class="kds-header">
+                <div>
+                    <h2><i class="fa-solid fa-kitchen-set"></i> Kitchen Display System (KDS)</h2>
+                    <p>Real-time incoming customer orders queue</p>
+                </div>
+                <div class="kds-status-bar">
+                    <span><i class="fa-solid fa-bell"></i> Audio Alerts Active</span>
+                </div>
+            </div>
+
+            <div class="kds-filters">
+                <button class="kds-filter active" onclick="filterKds('ALL')">All Orders</button>
+                <button class="kds-filter" onclick="filterKds('PENDING')">New Queue</button>
+                <button class="kds-filter" onclick="filterKds('PREPARING')">Preparing</button>
+                <button class="kds-filter" onclick="filterKds('READY')">Ready</button>
+            </div>
+
+            <div class="kds-grid" id="kitchenGrid"></div>
+        </section>
+
+        <!-- ================= 3. ADMIN PANEL TAB ================= -->
+        <section id="adminTab" class="tab-content">
+            <div class="admin-header">
+                <h2><i class="fa-solid fa-sliders"></i> Restaurant Dashboard & Management</h2>
+            </div>
+
+            <!-- Analytics Cards -->
+            <div class="stats-cards">
+                <div class="card stat-card">
+                    <i class="fa-solid fa-receipt icon-blue"></i>
+                    <div>
+                        <h3 id="statTotalOrders">0</h3>
+                        <p>Total Orders Today</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <i class="fa-solid fa-money-bill-wave icon-green"></i>
+                    <div>
+                        <h3 id="statTotalSales">PKR 0</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <i class="fa-solid fa-clock icon-orange"></i>
+                    <div>
+                        <h3 id="statPendingOrders">0</h3>
+                        <p>Pending Orders</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-grid">
+                <!-- Add New Item Form -->
+                <div class="card form-card">
+                    <h3><i class="fa-solid fa-plus-circle"></i> Add New Menu Item</h3>
+                    <form id="addMenuForm" onsubmit="addNewMenuItem(event)">
+                        <div class="form-group">
+                            <label>Item Name</label>
+                            <input type="text" id="itemName" required placeholder="e.g. Zinger Supreme Burger">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="itemCategory" required>
+                                <option value="Burgers">Burgers</option>
+                                <option value="Pizza">Pizza</option>
+                                <option value="Fries">Fries</option>
+                                <option value="Drinks">Drinks</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Price (PKR)</label>
+                            <input type="number" id="itemPrice" required placeholder="e.g. 650">
+                        </div>
+                        <div class="form-group">
+                            <label>Image URL</label>
+                            <input type="url" id="itemImage" required placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="itemDesc" rows="2" placeholder="Brief description of the food item..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-save"></i> Save Item to Menu</button>
+                    </form>
+                </div>
+
+                <!-- Admin Orders Table -->
+                <div class="card table-card">
+                    <h3><i class="fa-solid fa-list"></i> Recent Orders History</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Type</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminOrderTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= CART MODAL ================= -->
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-cart-shopping"></i> Your Shopping Cart</h2>
+                <button class="close-btn" onclick="toggleCartModal(false)">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div id="cartItemsList" class="cart-items-list"></div>
+
+                <div class="order-type-selector">
+                    <label><strong>Fulfillment Type:</strong></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="fulfillment" value="DINE_IN" checked onclick="toggleFulfillmentFields()"> Dine-In</label>
+                        <label><input type="radio" name="fulfillment" value="TAKEAWAY" onclick="toggleFulfillmentFields()"> Takeaway</label>
+                        <label><input type="radio" name="fulfillment" value="DELIVERY" onclick="toggleFulfillmentFields()"> Delivery</label>
+                    </div>
+                </div>
+
+                <div class="customer-info-form">
+                    <div class="form-group">
+                        <label>Customer Name *</label>
+                        <input type="text" id="custName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number *</label>
+                        <input type="text" id="custPhone" placeholder="03XXXXXXXXX" required>
+                    </div>
+                    
+                    <div class="form-group" id="fieldTableNo">
+                        <label>Table Number *</label>
+                        <input type="text" id="custTable" placeholder="e.g. Table #05">
+                    </div>
+
+                    <div class="form-group hidden" id="fieldAddress">
+                        <label>Delivery Address *</label>
+                        <textarea id="custAddress" placeholder="Street address, building, city..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Special Instructions</label>
+                        <input type="text" id="custNotes" placeholder="e.g. Make it extra spicy, no onions">
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-row"><span>Subtotal:</span> <span id="cartSubtotal">PKR 0</span></div>
+                    <div class="summary-row"><span>Delivery Fee:</span> <span id="cartDelivery">PKR 0</span></div>
+                    <div class="summary-row total"><span>Total Payable:</span> <span id="cartTotal">PKR 0</span></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="toggleCartModal(false)">Continue Ordering</button>
+                <button class="btn btn-success" onclick="placeOrder()"><i class="fa-solid fa-check-circle"></i> Confirm & Place Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript File -->
+    <script src="app.js"></script>
+</body>
+</html>
