@@ -25,6 +25,7 @@ function saveOrders() {
 // ================= APP INITIALIZATION =================
 document.addEventListener('DOMContentLoaded', () => {
     saveMenu();
+    applyTheme(localStorage.getItem('ze_theme') || 'light');
     renderMenu(menu);
     updateCartBadge();
     renderKitchenQueue();
@@ -47,6 +48,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// ================= TOAST NOTIFICATIONS =================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+    const icon = document.createElement('i');
+    icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+    const text = document.createElement('span');
+    text.textContent = message;
+
+    toast.append(icon, text);
+    container.appendChild(toast);
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+    }, 3000);
+}
+
+// ================= DARK MODE =================
+function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    if (isDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    document.querySelector('#themeToggle i').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('ze_theme', next);
+    applyTheme(next);
+}
 
 // ================= TAB NAVIGATION =================
 function switchTab(tabId) {
@@ -116,6 +156,7 @@ function addToCart(itemId) {
     }
 
     updateCartBadge();
+    showToast(`${item.name} added to cart`);
 }
 
 function updateCartBadge() {
@@ -136,7 +177,7 @@ function toggleCartModal(show) {
 function renderCartItems() {
     const container = document.getElementById('cartItemsList');
     if (cart.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding:20px; color:#888;">Your cart is empty.</p>';
+        container.innerHTML = '<p class="cart-empty">Your cart is empty.</p>';
         updateCartTotals(0);
         return;
     }
@@ -147,14 +188,20 @@ function renderCartItems() {
         subtotal += itemTotal;
         return `
             <div class="cart-item-row">
-                <div>
-                    <strong>${item.name}</strong><br>
-                    <small>PKR ${item.price} x ${item.qty}</small>
+                <img src="${item.image}" class="cart-thumb" alt="${item.name}">
+                <div class="cart-item-info">
+                    <strong>${item.name}</strong>
+                    <small>PKR ${item.price} x ${item.qty} = PKR ${itemTotal}</small>
                 </div>
-                <div class="qty-controls">
-                    <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
-                    <span>${item.qty}</span>
-                    <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                <div class="cart-item-actions">
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
+                        <span>${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromCart('${item.id}')">
+                        <i class="fa-solid fa-trash"></i> Remove
+                    </button>
                 </div>
             </div>
         `;
@@ -173,6 +220,14 @@ function changeQty(id, delta) {
     }
     updateCartBadge();
     renderCartItems();
+}
+
+function removeFromCart(id) {
+    const item = cart.find(c => c.id === id);
+    cart = cart.filter(c => c.id !== id);
+    updateCartBadge();
+    renderCartItems();
+    if (item) showToast(`${item.name} removed from cart`);
 }
 
 function toggleFulfillmentFields() {
@@ -206,7 +261,7 @@ function updateCartTotals(subtotal) {
 // ================= PLACE ORDER =================
 function placeOrder() {
     if (cart.length === 0) {
-        alert('Please add items to cart before placing an order!');
+        showToast('Please add items to cart before placing an order!', 'error');
         return;
     }
 
@@ -216,7 +271,7 @@ function placeOrder() {
     const notes = document.getElementById('custNotes').value.trim();
 
     if (!name || !phone) {
-        alert('Please fill out Name and Phone Number.');
+        showToast('Please fill out Name and Phone Number.', 'error');
         return;
     }
 
@@ -226,7 +281,7 @@ function placeOrder() {
     } else if (fulfillment === 'DELIVERY') {
         locationInfo = document.getElementById('custAddress').value.trim();
         if (!locationInfo) {
-            alert('Please enter delivery address.');
+            showToast('Please enter delivery address.', 'error');
             return;
         }
     } else {
@@ -257,7 +312,7 @@ function placeOrder() {
     updateCartBadge();
     toggleCartModal(false);
 
-    alert(`Order Placed Successfully! Your Order ID is ${newOrder.id}`);
+    showToast(`Order placed successfully! Your Order ID is ${newOrder.id}`);
 }
 
 // ================= KITCHEN DISPLAY SYSTEM (KDS) =================
@@ -378,7 +433,7 @@ function addNewMenuItem(e) {
     renderMenu(menu);
 
     document.getElementById('addMenuForm').reset();
-    alert('New item added to Menu successfully!');
+    showToast('New item added to menu successfully!');
 }
 
 function deleteOrder(orderId) {
@@ -388,6 +443,7 @@ function deleteOrder(orderId) {
         renderKitchenQueue();
         updateAdminStats();
         renderAdminTable();
+        showToast(`Order ${orderId} deleted`);
     }
 }
 

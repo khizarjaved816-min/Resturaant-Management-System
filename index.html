@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gourmet Express - Restaurant Management & Ordering System</title>
+    <title>Zaiqa Express - Restaurant Management & Ordering System</title>
+    <!-- Apply saved theme before paint to avoid a flash -->
+    <script>
+        try { if (localStorage.getItem('ze_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+    </script>
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -16,20 +20,25 @@
     <!-- TOP NAVIGATION BAR -->
     <header class="navbar">
         <div class="logo">
-            <i class="fa-solid fa-utensils"></i>
-            <span>Gourmet<strong>Express</strong></span>
+            <span class="logo-icon"><i class="fa-solid fa-bowl-food"></i></span>
+            <span class="logo-text">Zaiqa<strong>Express</strong></span>
         </div>
         <nav class="nav-links">
-            <button class="nav-btn active" onclick="switchTab('menuTab')"><i class="fa-solid fa-burger"></i> Customer Menu</button>
+            <button class="nav-btn active" onclick="switchTab('menuTab')"><i class="fa-solid fa-burger"></i> <span class="nav-label">Customer Menu</span></button>
             <button class="nav-btn" onclick="switchTab('kitchenTab')">
-                <i class="fa-solid fa-fire-burner"></i> Kitchen Display 
+                <i class="fa-solid fa-fire-burner"></i> <span class="nav-label">Kitchen Display</span>
                 <span id="kitchenBadge" class="badge">0</span>
             </button>
-            <button class="nav-btn" onclick="switchTab('adminTab')"><i class="fa-solid fa-chart-line"></i> Admin Panel</button>
+            <button class="nav-btn" onclick="switchTab('adminTab')"><i class="fa-solid fa-chart-line"></i> <span class="nav-label">Admin Panel</span></button>
         </nav>
-        <div class="cart-trigger" onclick="toggleCartModal(true)">
-            <i class="fa-solid fa-basket-shopping"></i>
-            <span id="cartCountBadge" class="cart-count">0</span>
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <div class="cart-trigger" onclick="toggleCartModal(true)" title="Open cart">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <span id="cartCountBadge" class="cart-count">0</span>
+            </div>
         </div>
     </header>
 
@@ -40,7 +49,7 @@
         <section id="menuTab" class="tab-content active">
             <div class="hero-banner">
                 <div class="hero-text">
-                    <h1>Delicious Food, Fast Delivery</h1>
+                    <h1>Zaiqa Express &mdash; Taste, Delivered Fast</h1>
                     <p>Order online for Dine-In, Pickup, or Home Delivery</p>
                 </div>
                 <div class="search-box">
@@ -232,6 +241,9 @@
             </div>
         </div>
     </div>
+
+    <!-- ================= TOAST NOTIFICATIONS ================= -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
     <!-- JavaScript File -->
     <script src="app.js"></script>
