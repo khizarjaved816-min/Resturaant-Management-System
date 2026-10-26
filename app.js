@@ -4,14 +4,58 @@ const DEFAULT_MENU = [
     { id: 'm2', name: 'Smokey BBQ Beef Burger', category: 'Burgers', price: 750, desc: 'Grilled juicy beef patty with caramelized onions & BBQ sauce', image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400' },
     { id: 'm3', name: 'Pepperoni Feast Pizza', category: 'Pizza', price: 1250, desc: 'Loaded with beef pepperoni and double mozzarella cheese', image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400' },
     { id: 'm4', name: 'Loaded Cheese Fries', category: 'Fries', price: 380, desc: 'Golden crispy fries topped with melted cheddar cheese', image: 'https://images.unsplash.com/photo-1576107232684-1279f390859f?w=400' },
-    { id: 'm5', name: 'Chilled Mint Lemonade', category: 'Drinks', price: 220, desc: 'Refreshing lemon juice blended with fresh mint leaves', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400' }
+    { id: 'm5', name: 'Chilled Mint Lemonade', category: 'Drinks', price: 220, desc: 'Refreshing lemon juice blended with fresh mint leaves', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400' },
+    ...newMenuItemsV2()
 ];
 
+// Items added after the original version. Their ids start with 'z' so they can never
+// clash with old 'm<number>' ids saved by the original app.
+function newMenuItemsV2() {
+    return [
+        { id: 'z1', name: 'Chicken Tikka Pizza', category: 'Pizza', price: 1350, desc: 'Spicy chicken tikka chunks, onions, capsicum and mozzarella', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400' },
+        { id: 'z2', name: 'Fajita Supreme Pizza', category: 'Pizza', price: 1450, desc: 'Fajita chicken, olives, mushrooms and loads of cheese', image: 'https://images.unsplash.com/photo-1599321955726-e048426594af?w=400' },
+        { id: 'z3', name: 'Margherita Classic Pizza', category: 'Pizza', price: 990, desc: 'Tomato basil sauce with fresh mozzarella on a thin crust', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400' },
+        { id: 'z4', name: 'Classic Beef Smash Burger', category: 'Burgers', price: 690, desc: 'Smashed beef patty, cheddar, tomato, lettuce and house sauce', image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400' },
+        { id: 'z5', name: 'Double Trouble Burger', category: 'Burgers', price: 950, desc: 'Two juicy beef patties with double cheese and jalapenos', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400' },
+        { id: 'z6', name: 'Masala Fries', category: 'Fries', price: 320, desc: 'Crispy fries tossed in our signature chatpata masala', image: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=400' },
+        { id: 'z7', name: 'Garlic Mayo Fries', category: 'Fries', price: 350, desc: 'Golden fries drizzled with creamy garlic mayo', image: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?w=400' },
+        { id: 'z8', name: 'Oreo Shake', category: 'Drinks', price: 480, desc: 'Thick vanilla shake blended with Oreo cookies and chocolate', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400' },
+        { id: 'z9', name: 'Fresh Orange Juice', category: 'Drinks', price: 300, desc: 'Freshly squeezed oranges, served chilled', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400' },
+        { id: 'z10', name: 'Chocolate Fudge Brownie', category: 'Desserts', price: 350, desc: 'Rich, gooey chocolate brownie baked fresh daily', image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400' },
+        { id: 'z11', name: 'Brownie with Ice Cream', category: 'Desserts', price: 520, desc: 'Warm brownie topped with vanilla ice cream and chocolate sauce', image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400' },
+        { id: 'z12', name: 'Chicken Seekh Kabab', category: 'BBQ', price: 650, desc: 'Charcoal-grilled minced chicken seekh kababs (4 pcs) with chutney', image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400' }
+    ];
+}
+
+const MENU_SEED_KEY = 'ze_menu_seed';
+const MENU_SEED_VERSION = 2;
+
 let menu = JSON.parse(localStorage.getItem('ge_menu')) || DEFAULT_MENU;
+
+// One-time upgrade: a menu saved by an older version doesn't contain the new items,
+// so append the ones that are missing. Runs only once, so items an admin deletes later stay deleted.
+if ((parseInt(localStorage.getItem(MENU_SEED_KEY), 10) || 0) < MENU_SEED_VERSION) {
+    const existingIds = new Set(menu.map(m => m.id));
+    newMenuItemsV2().forEach(item => {
+        if (!existingIds.has(item.id)) menu.push(item);
+    });
+    localStorage.setItem('ge_menu', JSON.stringify(menu));
+    localStorage.setItem(MENU_SEED_KEY, String(MENU_SEED_VERSION));
+}
 let orders = JSON.parse(localStorage.getItem('ge_orders')) || [];
 let cart = [];
 let currentKdsFilter = 'ALL';
 let currentCategory = 'All';
+let trackedOrderId = null;     // Order currently shown on the Track Order tab
+let editingMenuId = null;      // Menu item being edited in the admin form (null = adding)
+
+const ORDER_STEPS = ['PENDING', 'PREPARING', 'READY', 'COMPLETED'];
+const STEP_INFO = {
+    PENDING:   { label: 'Pending',   icon: 'fa-receipt',      text: 'Your order has been received and is waiting for the kitchen.' },
+    PREPARING: { label: 'Preparing', icon: 'fa-fire-burner',  text: 'Our chefs are preparing your food right now.' },
+    READY:     { label: 'Ready',     icon: 'fa-bell-concierge', text: 'Your order is ready!' },
+    COMPLETED: { label: 'Completed', icon: 'fa-circle-check', text: 'Order completed. Thank you for choosing Zaiqa Express!' }
+};
 
 const PHONE_PATTERN = /^03\d{9}$/;           // Pakistani mobile: 03XXXXXXXXX
 const ORDER_SEQ_KEY = 'ze_order_seq';        // Sequential order counter
@@ -59,6 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderKitchenQueue();
             updateAdminStats();
             renderAdminTable();
+            renderTracking();   // live status updates on the Track Order tab
+        }
+
+        if (e.key === 'ge_menu') {
+            menu = JSON.parse(e.newValue) || DEFAULT_MENU;
+            applyMenuFilters();
+            renderAdminMenuTable();
         }
     });
 });
@@ -111,28 +162,33 @@ function switchTab(tabId, btn) {
     if (btn) btn.classList.add('active');
 
     if (tabId === 'kitchenTab') renderKitchenQueue();
+    if (tabId === 'trackTab') renderTracking();
     if (tabId === 'adminTab') {
         updateAdminStats();
         renderAdminTable();
+        renderAdminMenuTable();
     }
 }
 
 // ================= MENU RENDERING & FILTERING =================
-function renderMenu(items) {
+function renderMenu(items, emptyHtml = '<p class="empty-state">No dishes available right now.</p>') {
     const grid = document.getElementById('menuGrid');
     if (items.length === 0) {
-        grid.innerHTML = '<p class="empty-state">No dishes match your search in this category.</p>';
+        grid.innerHTML = emptyHtml;
         return;
     }
     grid.innerHTML = items.map(item => `
-        <div class="food-card">
-            <img src="${escapeHtml(item.image)}" class="food-img" alt="${escapeHtml(item.name)}">
+        <div class="food-card${item.outOfStock ? ' out-of-stock' : ''}">
+            <div class="food-img-wrap">
+                <img src="${escapeHtml(item.image)}" class="food-img" alt="${escapeHtml(item.name)}">
+                ${item.outOfStock ? '<span class="stock-badge">Out of Stock</span>' : ''}
+            </div>
             <div class="food-info">
                 <div class="food-title">${escapeHtml(item.name)}</div>
                 <div class="food-desc">${escapeHtml(item.desc)}</div>
                 <div class="food-bottom">
                     <span class="food-price">PKR ${escapeHtml(item.price)}</span>
-                    <button class="btn btn-primary" onclick="addToCart('${escapeHtml(item.id)}')">
+                    <button class="btn btn-primary" onclick="addToCart('${escapeHtml(item.id)}')" ${item.outOfStock ? 'disabled' : ''}>
                         <i class="fa-solid fa-plus"></i> Add
                     </button>
                 </div>
@@ -141,17 +197,66 @@ function renderMenu(items) {
     `).join('');
 }
 
+// Common alternative spellings customers type, mapped to the spelling used on the menu
+const SEARCH_ALIASES = {
+    kebab: 'kabab', kebob: 'kabab', kabob: 'kabab', kabobs: 'kabab',
+    chips: 'fries', soda: 'drinks', drink: 'drinks', dessert: 'desserts', sweet: 'desserts',
+    burgers: 'burger', pizzas: 'pizza', shakes: 'shake', icecream: 'ice cream'
+};
+
+function searchWords(query) {
+    return query.toLowerCase().split(/\s+/).filter(Boolean).map(w => SEARCH_ALIASES[w] || w);
+}
+
+// Every word must appear somewhere in the item's name, description or category,
+// so "chicken pizza" finds "Chicken Tikka Pizza" and "dessert" finds the Desserts items.
+function matchesSearch(item, words) {
+    const text = `${item.name || ''} ${item.desc || ''} ${item.category || ''}`.toLowerCase();
+    return words.every(w => text.includes(w));
+}
+
 // Category and search are applied together, so neither one overrides the other
 function applyMenuFilters() {
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const query = document.getElementById('searchInput').value.trim();
+    const words = searchWords(query);
     const filtered = menu.filter(item => {
         const inCategory = currentCategory === 'All' || item.category === currentCategory;
-        const matchesQuery = !query ||
-            String(item.name || '').toLowerCase().includes(query) ||
-            String(item.desc || '').toLowerCase().includes(query);
-        return inCategory && matchesQuery;
+        return inCategory && matchesSearch(item, words);
     });
-    renderMenu(filtered);
+
+    let emptyHtml = '<p class="empty-state">No dishes in this category yet.</p>';
+    if (query) {
+        // If the dish exists in another category, offer to search everywhere
+        const elsewhere = currentCategory !== 'All' && menu.some(item => matchesSearch(item, words));
+        emptyHtml = `
+            <div class="empty-state search-empty">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>No dishes found for "<strong>${escapeHtml(query)}</strong>"${currentCategory !== 'All' ? ` in ${escapeHtml(currentCategory)}` : ''}.</span>
+                ${elsewhere
+                    ? `<button class="btn btn-primary btn-sm" onclick="filterCategory('All', document.querySelector('.cat-btn'))">Search all categories</button>`
+                    : `<button class="btn btn-secondary btn-sm" onclick="clearSearch()">Clear search</button>`}
+            </div>`;
+    }
+
+    renderMenu(filtered, emptyHtml);
+    updateSearchInfo(query, filtered.length);
+}
+
+function updateSearchInfo(query, count) {
+    const info = document.getElementById('searchInfo');
+    document.getElementById('searchClear').classList.toggle('hidden', !query);
+    if (!query || count === 0) {
+        info.innerHTML = '';
+        return;
+    }
+    info.innerHTML = `${count} ${count === 1 ? 'dish' : 'dishes'} found for "<strong>${escapeHtml(query)}</strong>"`;
+}
+
+function clearSearch() {
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    applyMenuFilters();
+    input.focus();
 }
 
 function filterCategory(category, btn) {
@@ -169,6 +274,10 @@ function filterMenu() {
 function addToCart(itemId) {
     const item = menu.find(m => m.id === itemId);
     if (!item) return;
+    if (item.outOfStock) {
+        showToast(`${item.name} is currently out of stock.`, 'error');
+        return;
+    }
     const existing = cart.find(c => c.id === itemId);
 
     if (existing) {
@@ -287,6 +396,16 @@ function placeOrder() {
         return;
     }
 
+    // Items may have been removed or marked out of stock after they were added to the cart
+    const unavailable = cart.find(c => {
+        const current = menu.find(m => m.id === c.id);
+        return !current || current.outOfStock;
+    });
+    if (unavailable) {
+        showToast(`${unavailable.name} is no longer available. Please remove it from your cart.`, 'error');
+        return;
+    }
+
     const name = document.getElementById('custName').value.trim();
     // Allow the user to type spaces/dashes (e.g. 0300-1234567) but store digits only
     const phone = document.getElementById('custPhone').value.replace(/[\s-]/g, '');
@@ -347,7 +466,12 @@ function placeOrder() {
     resetCustomerForm();
     toggleCartModal(false);
 
-    showToast(`Order placed successfully! Your Order ID is ${newOrder.id}`);
+    // Pre-fill the Track Order tab so the customer can follow this order
+    trackedOrderId = newOrder.id;
+    document.getElementById('trackInput').value = newOrder.id;
+    renderTracking();
+
+    showToast(`Order placed successfully! Your Order ID is ${newOrder.id} — follow it in Track Order.`);
 }
 
 // Sequential, unique order IDs. The counter lives in localStorage so it survives
@@ -445,7 +569,75 @@ function updateOrderStatus(orderId, newStatus) {
         renderKitchenQueue();
         updateAdminStats();
         renderAdminTable();
+        renderTracking();
     }
+}
+
+// ================= ORDER TRACKING =================
+function trackOrder(e) {
+    e.preventDefault();
+    let query = document.getElementById('trackInput').value.trim().toUpperCase();
+    if (!query) {
+        showToast('Please enter your Order ID.', 'error');
+        return;
+    }
+    // Accept "1001" as shorthand for "ORD-1001"
+    if (/^\d+$/.test(query)) query = 'ORD-' + query;
+    document.getElementById('trackInput').value = query;
+
+    trackedOrderId = query;
+    renderTracking();
+}
+
+// Re-rendered whenever orders change (this tab or another tab via the storage event)
+function renderTracking() {
+    const container = document.getElementById('trackResult');
+    if (!trackedOrderId) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const order = orders.find(o => String(o.id).toUpperCase() === trackedOrderId);
+    if (!order) {
+        container.innerHTML = `
+            <div class="track-empty">
+                <i class="fa-solid fa-circle-question"></i>
+                No order found with ID <strong>${escapeHtml(trackedOrderId)}</strong>. Please check and try again.
+            </div>`;
+        return;
+    }
+
+    const currentStep = Math.max(0, ORDER_STEPS.indexOf(order.status));
+    const info = STEP_INFO[ORDER_STEPS[currentStep]];
+    const fillPercent = (currentStep / (ORDER_STEPS.length - 1)) * 100;
+
+    container.innerHTML = `
+        <div class="track-summary">
+            <div>
+                <span class="track-id">${escapeHtml(order.id)}</span>
+                <span class="status-tag status-${escapeHtml(order.status)}">${escapeHtml(info.label)}</span>
+            </div>
+            <div class="track-meta">
+                ${escapeHtml(order.customer)} &middot; ${escapeHtml(order.fulfillment)} &middot; PKR ${escapeHtml(order.totalAmount)}
+                ${order.time ? `&middot; Placed at ${escapeHtml(order.time)}` : ''}
+            </div>
+        </div>
+
+        <div class="progress-track" style="--progress: ${fillPercent}%">
+            ${ORDER_STEPS.map((step, i) => `
+                <div class="progress-step ${i < currentStep ? 'done' : ''} ${i === currentStep ? 'current' : ''}">
+                    <div class="step-dot"><i class="fa-solid ${STEP_INFO[step].icon}"></i></div>
+                    <span class="step-label">${STEP_INFO[step].label}</span>
+                </div>
+            `).join('')}
+        </div>
+
+        <p class="track-message"><i class="fa-solid fa-circle-info"></i> ${escapeHtml(info.text)}</p>
+
+        <ul class="ticket-items track-items">
+            ${(order.items || []).map(i => `<li><span>${escapeHtml(i.name)}</span> <strong>x${escapeHtml(i.qty)}</strong></li>`).join('')}
+        </ul>
+    `;
 }
 
 // ================= ADMIN DASHBOARD & CRUD =================
@@ -502,21 +694,136 @@ function addNewMenuItem(e) {
         return;
     }
 
+    // The same form is used for editing an existing item
+    if (editingMenuId) {
+        const item = menu.find(m => m.id === editingMenuId);
+        if (item) {
+            Object.assign(item, { name, category, price, image, desc });
+            // Keep cart entries in sync with the edited item
+            cart.forEach(c => {
+                if (c.id === item.id) Object.assign(c, { name, category, price, image, desc });
+            });
+            saveMenu();
+            applyMenuFilters();
+            renderAdminMenuTable();
+            updateCartBadge();
+            showToast(`${name} updated successfully!`);
+        }
+        cancelMenuEdit();
+        return;
+    }
+
     const newItem = {
         id: generateMenuId(),
         name,
         category,
         price,
         image,
-        desc
+        desc,
+        outOfStock: false
     };
 
     menu.push(newItem);
     saveMenu();
     applyMenuFilters();
+    renderAdminMenuTable();
 
     document.getElementById('addMenuForm').reset();
     showToast('New item added to menu successfully!');
+}
+
+// ================= MENU MANAGEMENT (Edit / Delete / Stock) =================
+function renderAdminMenuTable() {
+    const tbody = document.getElementById('adminMenuTable');
+    if (menu.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No menu items yet.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = menu.map(item => {
+        const id = escapeHtml(item.id);
+        return `
+        <tr class="${item.outOfStock ? 'row-out-of-stock' : ''}${item.id === editingMenuId ? ' row-editing' : ''}">
+            <td>
+                <div class="menu-cell">
+                    <img src="${escapeHtml(item.image)}" class="table-thumb" alt="">
+                    <strong>${escapeHtml(item.name)}</strong>
+                </div>
+            </td>
+            <td>${escapeHtml(item.category)}</td>
+            <td>PKR ${escapeHtml(item.price)}</td>
+            <td>
+                <label class="stock-switch" title="Toggle availability">
+                    <input type="checkbox" ${item.outOfStock ? '' : 'checked'} onchange="toggleStock('${id}')">
+                    <span class="switch-slider"></span>
+                    <span class="switch-text">${item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
+                </label>
+            </td>
+            <td class="action-cell">
+                <button class="btn btn-secondary btn-sm" onclick="editMenuItem('${id}')" title="Edit">
+                    <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteMenuItem('${id}')" title="Delete">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+    `;
+    }).join('');
+}
+
+function toggleStock(itemId) {
+    const item = menu.find(m => m.id === itemId);
+    if (!item) return;
+    item.outOfStock = !item.outOfStock;
+    saveMenu();
+    applyMenuFilters();
+    renderAdminMenuTable();
+    showToast(item.outOfStock ? `${item.name} marked Out of Stock` : `${item.name} is back In Stock`);
+}
+
+function editMenuItem(itemId) {
+    const item = menu.find(m => m.id === itemId);
+    if (!item) return;
+    editingMenuId = itemId;
+
+    document.getElementById('itemName').value = item.name || '';
+    document.getElementById('itemCategory').value = item.category;
+    document.getElementById('itemPrice').value = item.price;
+    document.getElementById('itemImage').value = item.image || '';
+    document.getElementById('itemDesc').value = item.desc || '';
+
+    document.getElementById('menuFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Menu Item';
+    document.getElementById('menuFormSubmit').innerHTML = '<i class="fa-solid fa-save"></i> Update Item';
+    document.getElementById('menuFormCancel').classList.remove('hidden');
+    renderAdminMenuTable();
+    document.getElementById('addMenuForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('itemName').focus({ preventScroll: true });
+}
+
+function cancelMenuEdit() {
+    editingMenuId = null;
+    document.getElementById('addMenuForm').reset();
+    document.getElementById('menuFormTitle').innerHTML = '<i class="fa-solid fa-plus-circle"></i> Add New Menu Item';
+    document.getElementById('menuFormSubmit').innerHTML = '<i class="fa-solid fa-save"></i> Save Item to Menu';
+    document.getElementById('menuFormCancel').classList.add('hidden');
+    renderAdminMenuTable();
+}
+
+function deleteMenuItem(itemId) {
+    const item = menu.find(m => m.id === itemId);
+    if (!item) return;
+    if (!confirm(`Delete "${item.name}" from the menu?`)) return;
+
+    menu = menu.filter(m => m.id !== itemId);
+    cart = cart.filter(c => c.id !== itemId);
+    if (editingMenuId === itemId) cancelMenuEdit();
+
+    saveMenu();
+    applyMenuFilters();
+    renderAdminMenuTable();
+    updateCartBadge();
+    showToast(`${item.name} deleted from menu`);
 }
 
 // Time-based IDs never repeat, unlike 'm' + (menu.length + 1) which collided after deletions
@@ -535,6 +842,7 @@ function deleteOrder(orderId) {
         renderKitchenQueue();
         updateAdminStats();
         renderAdminTable();
+        renderTracking();
         showToast(`Order ${orderId} deleted`);
     }
 }

@@ -24,12 +24,13 @@
             <span class="logo-text">Zaiqa<strong>Express</strong></span>
         </div>
         <nav class="nav-links">
-            <button class="nav-btn active" onclick="switchTab('menuTab', this)"><i class="fa-solid fa-burger"></i> <span class="nav-label">Customer Menu</span></button>
-            <button class="nav-btn" onclick="switchTab('kitchenTab', this)">
+            <button class="nav-btn active" onclick="switchTab('menuTab', this)" title="Customer Menu" aria-label="Customer Menu"><i class="fa-solid fa-burger"></i> <span class="nav-label">Customer Menu</span></button>
+            <button class="nav-btn" onclick="switchTab('trackTab', this)" title="Track Order" aria-label="Track Order"><i class="fa-solid fa-location-crosshairs"></i> <span class="nav-label">Track Order</span></button>
+            <button class="nav-btn" onclick="switchTab('kitchenTab', this)" title="Kitchen Display" aria-label="Kitchen Display">
                 <i class="fa-solid fa-fire-burner"></i> <span class="nav-label">Kitchen Display</span>
                 <span id="kitchenBadge" class="badge">0</span>
             </button>
-            <button class="nav-btn" onclick="switchTab('adminTab', this)"><i class="fa-solid fa-chart-line"></i> <span class="nav-label">Admin Panel</span></button>
+            <button class="nav-btn" onclick="switchTab('adminTab', this)" title="Admin Panel" aria-label="Admin Panel"><i class="fa-solid fa-chart-line"></i> <span class="nav-label">Admin Panel</span></button>
         </nav>
         <div class="nav-actions">
             <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
@@ -54,7 +55,8 @@
                 </div>
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="searchInput" placeholder="Search delicious food..." oninput="filterMenu()">
+                    <input type="search" id="searchInput" placeholder="Search dishes, e.g. chicken pizza..." oninput="filterMenu()" onkeydown="if (event.key === 'Escape') clearSearch()" autocomplete="off" aria-label="Search the menu">
+                    <button type="button" id="searchClear" class="search-clear hidden" onclick="clearSearch()" aria-label="Clear search">&times;</button>
                 </div>
             </div>
 
@@ -65,10 +67,27 @@
                 <button class="cat-btn" onclick="filterCategory('Pizza', this)">Pizza</button>
                 <button class="cat-btn" onclick="filterCategory('Fries', this)">Fries</button>
                 <button class="cat-btn" onclick="filterCategory('Drinks', this)">Drinks</button>
+                <button class="cat-btn" onclick="filterCategory('Desserts', this)">Desserts</button>
+                <button class="cat-btn" onclick="filterCategory('BBQ', this)">BBQ</button>
             </div>
+
+            <div class="search-info" id="searchInfo" aria-live="polite"></div>
 
             <!-- Menu Grid -->
             <div class="menu-grid" id="menuGrid"></div>
+        </section>
+
+        <!-- ================= TRACK ORDER TAB ================= -->
+        <section id="trackTab" class="tab-content">
+            <div class="card track-card">
+                <h2><i class="fa-solid fa-location-crosshairs"></i> Track Your Order</h2>
+                <p class="track-hint">Enter the Order ID shown after you placed your order (e.g. ORD-1001).</p>
+                <form class="track-form" onsubmit="trackOrder(event)">
+                    <input type="text" id="trackInput" placeholder="ORD-1001" autocomplete="off" aria-label="Order ID">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Track</button>
+                </form>
+                <div id="trackResult" class="track-result"></div>
+            </div>
         </section>
 
         <!-- ================= 2. KITCHEN DISPLAY TAB ================= -->
@@ -128,7 +147,7 @@
             <div class="admin-grid">
                 <!-- Add New Item Form -->
                 <div class="card form-card">
-                    <h3><i class="fa-solid fa-plus-circle"></i> Add New Menu Item</h3>
+                    <h3 id="menuFormTitle"><i class="fa-solid fa-plus-circle"></i> Add New Menu Item</h3>
                     <form id="addMenuForm" onsubmit="addNewMenuItem(event)">
                         <div class="form-group">
                             <label>Item Name</label>
@@ -141,6 +160,8 @@
                                 <option value="Pizza">Pizza</option>
                                 <option value="Fries">Fries</option>
                                 <option value="Drinks">Drinks</option>
+                                <option value="Desserts">Desserts</option>
+                                <option value="BBQ">BBQ</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -155,7 +176,8 @@
                             <label>Description</label>
                             <textarea id="itemDesc" rows="2" placeholder="Brief description of the food item..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-save"></i> Save Item to Menu</button>
+                        <button type="submit" class="btn btn-primary btn-block" id="menuFormSubmit"><i class="fa-solid fa-save"></i> Save Item to Menu</button>
+                        <button type="button" class="btn btn-secondary btn-block hidden" id="menuFormCancel" onclick="cancelMenuEdit()" style="margin-top: 8px;">Cancel Editing</button>
                     </form>
                 </div>
 
@@ -177,6 +199,25 @@
                             <tbody id="adminOrderTable"></tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- Menu Items Management Table -->
+            <div class="card table-card menu-manage-card">
+                <h3><i class="fa-solid fa-utensils"></i> Menu Items</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Availability</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminMenuTable"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
