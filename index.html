@@ -24,12 +24,12 @@
             <span class="logo-text">Zaiqa<strong>Express</strong></span>
         </div>
         <nav class="nav-links">
-            <button class="nav-btn active" onclick="switchTab('menuTab')"><i class="fa-solid fa-burger"></i> <span class="nav-label">Customer Menu</span></button>
-            <button class="nav-btn" onclick="switchTab('kitchenTab')">
+            <button class="nav-btn active" onclick="switchTab('menuTab', this)"><i class="fa-solid fa-burger"></i> <span class="nav-label">Customer Menu</span></button>
+            <button class="nav-btn" onclick="switchTab('kitchenTab', this)">
                 <i class="fa-solid fa-fire-burner"></i> <span class="nav-label">Kitchen Display</span>
                 <span id="kitchenBadge" class="badge">0</span>
             </button>
-            <button class="nav-btn" onclick="switchTab('adminTab')"><i class="fa-solid fa-chart-line"></i> <span class="nav-label">Admin Panel</span></button>
+            <button class="nav-btn" onclick="switchTab('adminTab', this)"><i class="fa-solid fa-chart-line"></i> <span class="nav-label">Admin Panel</span></button>
         </nav>
         <div class="nav-actions">
             <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode">
@@ -54,17 +54,17 @@
                 </div>
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="searchInput" placeholder="Search delicious food..." onkeyup="filterMenu()">
+                    <input type="text" id="searchInput" placeholder="Search delicious food..." oninput="filterMenu()">
                 </div>
             </div>
 
             <!-- Categories -->
             <div class="categories" id="categoryContainer">
-                <button class="cat-btn active" onclick="filterCategory('All')">All</button>
-                <button class="cat-btn" onclick="filterCategory('Burgers')">Burgers</button>
-                <button class="cat-btn" onclick="filterCategory('Pizza')">Pizza</button>
-                <button class="cat-btn" onclick="filterCategory('Fries')">Fries</button>
-                <button class="cat-btn" onclick="filterCategory('Drinks')">Drinks</button>
+                <button class="cat-btn active" onclick="filterCategory('All', this)">All</button>
+                <button class="cat-btn" onclick="filterCategory('Burgers', this)">Burgers</button>
+                <button class="cat-btn" onclick="filterCategory('Pizza', this)">Pizza</button>
+                <button class="cat-btn" onclick="filterCategory('Fries', this)">Fries</button>
+                <button class="cat-btn" onclick="filterCategory('Drinks', this)">Drinks</button>
             </div>
 
             <!-- Menu Grid -->
@@ -84,10 +84,11 @@
             </div>
 
             <div class="kds-filters">
-                <button class="kds-filter active" onclick="filterKds('ALL')">All Orders</button>
-                <button class="kds-filter" onclick="filterKds('PENDING')">New Queue</button>
-                <button class="kds-filter" onclick="filterKds('PREPARING')">Preparing</button>
-                <button class="kds-filter" onclick="filterKds('READY')">Ready</button>
+                <button class="kds-filter active" onclick="filterKds('ALL', this)">All Orders</button>
+                <button class="kds-filter" onclick="filterKds('PENDING', this)">New Queue</button>
+                <button class="kds-filter" onclick="filterKds('PREPARING', this)">Preparing</button>
+                <button class="kds-filter" onclick="filterKds('READY', this)">Ready</button>
+                <button class="kds-filter" onclick="filterKds('COMPLETED', this)">Completed</button>
             </div>
 
             <div class="kds-grid" id="kitchenGrid"></div>
@@ -112,7 +113,7 @@
                     <i class="fa-solid fa-money-bill-wave icon-green"></i>
                     <div>
                         <h3 id="statTotalSales">PKR 0</h3>
-                        <p>Total Revenue</p>
+                        <p>Revenue Today</p>
                     </div>
                 </div>
                 <div class="card stat-card">
@@ -144,7 +145,7 @@
                         </div>
                         <div class="form-group">
                             <label>Price (PKR)</label>
-                            <input type="number" id="itemPrice" required placeholder="e.g. 650">
+                            <input type="number" id="itemPrice" required min="1" step="any" placeholder="e.g. 650">
                         </div>
                         <div class="form-group">
                             <label>Image URL</label>
@@ -209,12 +210,12 @@
                     </div>
                     <div class="form-group">
                         <label>Phone Number *</label>
-                        <input type="text" id="custPhone" placeholder="03XXXXXXXXX" required>
+                        <input type="tel" id="custPhone" placeholder="03XXXXXXXXX" inputmode="numeric" maxlength="13" required>
                     </div>
                     
                     <div class="form-group" id="fieldTableNo">
                         <label>Table Number *</label>
-                        <input type="text" id="custTable" placeholder="e.g. Table #05">
+                        <input type="text" id="custTable" placeholder="e.g. Table #05" required>
                     </div>
 
                     <div class="form-group hidden" id="fieldAddress">

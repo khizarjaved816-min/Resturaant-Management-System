@@ -431,6 +431,20 @@ body {
 
 .order-ticket.PREPARING { border-top-color: var(--info); }
 .order-ticket.READY { border-top-color: var(--success); }
+.order-ticket.COMPLETED { border-top-color: #546e7a; opacity: 0.85; }
+
+.ticket-done {
+    width: 100%;
+    text-align: center;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    padding: 10px 0;
+}
 
 .ticket-header {
     padding: 12px 15px;
